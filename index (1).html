@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tribal Wars Distance Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            position: relative;
+            z-index: 0;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://meblogwritegood.com/wp-content/uploads/2011/10/screen-shot-2011-10-14-at-4-53-14-pm.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.2;
+            z-index: -1;
+        }
+
+        .content {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        button {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <h1>Tribal Wars Distance Tool</h1>
+        <p>Enter your village coordinates to calculate the closest target villages and their travel times:</p>
+        <label for="x">X Coordinate:</label>
+        <input type="number" id="x" placeholder="e.g., 504">
+        <label for="y">Y Coordinate:</label>
+        <input type="number" id="y" placeholder="e.g., 516">
+        <button onclick="calculateDistances()">Calculate</button>
+
+        <table id="results">
+            <thead>
+                <tr>
+                    <th>Village Coordinates</th>
+                    <th>Packets</th>
+                    <th>Target</th>
+                    <th>Swords Travel Time</th>
+                    <th>Non-Swords Travel Time</th>
+                    <th>Packets to Send</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Results will be populated here -->
+            </tbody>
+        </table>
+
+        <button onclick="copySelectedPacketsToClipboard()">Copy Selected Packets</button>
+
+        <div id="updated-table"></div>
+    </div>
+
+    <script>
+        const targetVillages = [
+            { name: "Apu", x: 490, y: 496, packets: 5, target: 15 },
+            { name: "Maggie", x: 486, y: 499, packets: 5, target: 15 },
+            { name: "Marge", x: 486, y: 500, packets: 5, target: 15 },
+            { name: "009 | K44", x: 481, y: 499, packets: 4, target: 15 },
+            { name: "002 | K54", x: 482, y: 504, packets: 4, target: 15 },
+            { name: "Up and About", x: 478, y: 501, packets: 1, target: 15 },
+            { name: "nutuionut's Village 02", x: 478, y: 503, packets: 1, target: 15 },
+            { name: "Marlborough's village", x: 478, y: 505, packets: 1, target: 15 },
+            { name: "The Hour Man", x: 479, y: 505, packets: 1, target: 15 },
+            { name: "010 | K54", x: 479, y: 503, packets: 1, target: 15 },
+            { name: "004 | K54", x: 483, y: 504, packets: 0, target: 15 },
+            { name: "005 | K54", x: 479, y: 502, packets: 0, target: 15 }
+        ];
+
+        function calculateDistances() {
+            const x = parseInt(document.getElementById('x').value);
+            const y = parseInt(document.getElementById('y').value);
+
+            if (isNaN(x) || isNaN(y)) {
+                alert('Please enter valid coordinates.');
+                return;
+            }
+
+            const results = targetVillages.map(village => {
+                const distance = Math.sqrt((village.x - x) ** 2 + (village.y - y) ** 2);
+                const swordsTime = Math.floor(distance * 22);
+                const nonSwordsTime = Math.floor(distance * 18);
+                return {
+                    coordinates: `${village.name} (${village.x}|${village.y})`,
+                    packets: village.packets,
+                    target: village.target,
+                    swordsTime: `${Math.floor(swordsTime / 60).toString().padStart(2, '0')}h${(swordsTime % 60).toString().padStart(2, '0')}m`,
+                    nonSwordsTime: `${Math.floor(nonSwordsTime / 60).toString().padStart(2, '0')}h${(nonSwordsTime % 60).toString().padStart(2, '0')}m`
+                };
+            });
+
+            results.sort((a, b) => a.swordsTime.localeCompare(b.swordsTime));
+
+            const tableBody = document.querySelector('#results tbody');
+            tableBody.innerHTML = results.map(result => `
+                <tr>
+                    <td>${result.coordinates}</td>
+                    <td>${result.packets}</td>
+                    <td>${result.target}</td>
+                    <td>${result.swordsTime}</td>
+                    <td>${result.nonSwordsTime}</td>
+                    <td><input type="number" min="0" placeholder="Packets to send"></td>
+                </tr>
+            `).join('');
+        }
+
+        function copySelectedPacketsToClipboard() {
+            const rows = document.querySelectorAll('#results tbody tr');
+            const selectedPackets = [];
+
+            rows.forEach(row => {
+                const village = row.cells[0].textContent;
+                const packetsInput = row.cells[5].querySelector('input');
+                const packetsToAdd = parseInt(packetsInput.value) || 0;
+
+                if (packetsToAdd > 0) {
+                    selectedPackets.push(`${village}: ${packetsToAdd} packets`);
+                }
+            });
+
+            if (selectedPackets.length > 0) {
+                const clipboardText = selectedPackets.join('\n');
+                navigator.clipboard.writeText(clipboardText).then(() => {
+                    alert('Packets copied to clipboard!');
+                });
+            } else {
+                alert('No packets selected to copy.');
+            }
+        }
+    </script>
+</body>
+</html>
