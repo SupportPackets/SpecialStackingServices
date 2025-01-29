@@ -154,7 +154,7 @@
             if (selectedPackets.length > 0) {
                 const clipboardText = selectedPackets.join('\n');
                 navigator.clipboard.writeText(clipboardText).then(() => {
-                    alert('Packets copied to clipboard!');
+                    alert('Packets copied to clipboard! You can paste them in the forums');
                 });
             } else {
                 alert('No packets selected to copy.');
