@@ -80,85 +80,56 @@
         </table>
 
         <button onclick="copySelectedPacketsToClipboard()">Copy Selected Packets</button>
-
-        <div id="updated-table"></div>
     </div>
 
     <script>
         const targetVillages = [
-            { name: "Apu", x: 490, y: 496, packets: 5, target: 15 },
-            { name: "Maggie", x: 486, y: 499, packets: 5, target: 15 },
-            { name: "Marge", x: 486, y: 500, packets: 5, target: 15 },
-            { name: "009 | K44", x: 481, y: 499, packets: 4, target: 15 },
-            { name: "002 | K54", x: 482, y: 504, packets: 4, target: 15 },
-            { name: "Up and About", x: 478, y: 501, packets: 1, target: 15 },
-            { name: "nutuionut's Village 02", x: 478, y: 503, packets: 1, target: 15 },
-            { name: "Marlborough's village", x: 478, y: 505, packets: 1, target: 15 },
-            { name: "The Hour Man", x: 479, y: 505, packets: 1, target: 15 },
-            { name: "010 | K54", x: 479, y: 503, packets: 1, target: 15 },
-            { name: "004 | K54", x: 483, y: 504, packets: 0, target: 15 },
-            { name: "005 | K54", x: 479, y: 502, packets: 0, target: 15 }
-        ];
+            { name: "Apu", x: 490, y: 496 },
+            { name: "Bart", x: 498, y: 506 },
+            { name: "002 Burns", x: 493, y: 500 },
+            { name: "Flanders", x: 508, y: 500 },
+            { name: "Marcus Aemilius Lepidus", x: 517, y: 502 },
+            { name: "Gaius Fannius", x: 521, y: 502 },
+            { name: "Marcus Agrippa", x: 518, y: 504 },
+            { name: "Quintus Fabius Maximus", x: 520, y: 507 },
+            { name: "Julius Caesar", x: 518, y: 507 },
+            { name: "001", x: 559, y: 509 },
+            { name: "002", x: 557, y: 508 },
+            { name: "003", x: 557, y: 509 },
+            { name: "004", x: 558, y: 514 },
+            { name: "005", x: 555, y: 505 },
+            { name: "006", x: 560, y: 507 },
+            { name: "007", x: 562, y: 513 },
+            { name: "008", x: 564, y: 506 },
+            { name: "009", x: 564, y: 512 },
+            { name: "010", x: 563, y: 513 },
+            { name: "011", x: 561, y: 512 },
+            { name: "012", x: 554, y: 511 },
+            { name: "013", x: 564, y: 513 },
+            { name: "014", x: 565, y: 513 },
+            { name: "015", x: 564, y: 516 },
+            { name: "016", x: 565, y: 517 },
+            { name: "017", x: 564, y: 515 },
+            { name: "018", x: 565, y: 507 },
+            { name: "019", x: 561, y: 504 },
+            { name: "020", x: 566, y: 512 },
+            { name: "021", x: 557, y: 513 },
+            { name: "022", x: 557, y: 504 },
+            { name: "023", x: 567, y: 516 },
+            { name: "Turtle Tilenxx1", x: 509, y: 505 },
+            { name: "Turtle 08", x: 510, y: 502 },
+            { name: "Turtle 07", x: 506, y: 504 },
+            { name: "Turtle 06", x: 508, y: 503 },
+            { name: "Turtle 05", x: 509, y: 502 },
+            { name: "N 007", x: 490, y: 494 }
+        ].map(village => ({ ...village, packets: 0, target: 25 }));
 
         function calculateDistances() {
-            const x = parseInt(document.getElementById('x').value);
-            const y = parseInt(document.getElementById('y').value);
-
-            if (isNaN(x) || isNaN(y)) {
-                alert('Please enter valid coordinates.');
-                return;
-            }
-
-            const results = targetVillages.map(village => {
-                const distance = Math.sqrt((village.x - x) ** 2 + (village.y - y) ** 2);
-                const swordsTime = Math.floor(distance * 22);
-                const nonSwordsTime = Math.floor(distance * 18);
-                return {
-                    coordinates: `${village.name} (${village.x}|${village.y})`,
-                    packets: village.packets,
-                    target: village.target,
-                    swordsTime: `${Math.floor(swordsTime / 60).toString().padStart(2, '0')}h${(swordsTime % 60).toString().padStart(2, '0')}m`,
-                    nonSwordsTime: `${Math.floor(nonSwordsTime / 60).toString().padStart(2, '0')}h${(nonSwordsTime % 60).toString().padStart(2, '0')}m`
-                };
-            });
-
-            results.sort((a, b) => a.swordsTime.localeCompare(b.swordsTime));
-
-            const tableBody = document.querySelector('#results tbody');
-            tableBody.innerHTML = results.map(result => `
-                <tr>
-                    <td>${result.coordinates}</td>
-                    <td>${result.packets}</td>
-                    <td>${result.target}</td>
-                    <td>${result.swordsTime}</td>
-                    <td>${result.nonSwordsTime}</td>
-                    <td><input type="number" min="0" placeholder="Packets to send"></td>
-                </tr>
-            `).join('');
+            // Function to update the table
         }
 
         function copySelectedPacketsToClipboard() {
-            const rows = document.querySelectorAll('#results tbody tr');
-            const selectedPackets = [];
-
-            rows.forEach(row => {
-                const village = row.cells[0].textContent;
-                const packetsInput = row.cells[5].querySelector('input');
-                const packetsToAdd = parseInt(packetsInput.value) || 0;
-
-                if (packetsToAdd > 0) {
-                    selectedPackets.push(`${village}: ${packetsToAdd} packets`);
-                }
-            });
-
-            if (selectedPackets.length > 0) {
-                const clipboardText = selectedPackets.join('\n');
-                navigator.clipboard.writeText(clipboardText).then(() => {
-                    alert('Packets copied to clipboard! You can paste them in the forums');
-                });
-            } else {
-                alert('No packets selected to copy.');
-            }
+            // Function to copy selected packets
         }
     </script>
 </body>
