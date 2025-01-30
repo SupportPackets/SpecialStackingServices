@@ -25,6 +25,7 @@
                 <th>Target</th>
                 <th>Coordinates</th>
                 <th>Player</th>
+                <th>Distance</th>
                 <th>Packets to Add</th>
                 <th>Total Packets</th>
                 <th>Target</th>
@@ -67,13 +68,30 @@
             const x = parseInt(document.getElementById("xCoord").value);
             const y = parseInt(document.getElementById("yCoord").value);
             
+            if (isNaN(x) || isNaN(y)) {
+                alert("Please enter valid coordinates.");
+                return;
+            }
+
             const tableBody = document.getElementById("resultsTable").querySelector("tbody");
             tableBody.innerHTML = "";
-            villages.forEach(village => {
+
+            // Calculate distances
+            let distances = villages.map(village => {
+                let distance = Math.sqrt((village.x - x) ** 2 + (village.y - y) ** 2);
+                return { ...village, distance: distance.toFixed(2) };
+            });
+
+            // Sort by distance (ascending)
+            distances.sort((a, b) => a.distance - b.distance);
+
+            // Populate the table
+            distances.forEach(village => {
                 const row = `<tr>
                     <td>${village.name}</td>
                     <td>(${village.x}|${village.y})</td>
                     <td>${village.player}</td>
+                    <td>${village.distance}</td>
                     <td contenteditable="true"></td>
                     <td>0</td>
                     <td>20</td>
