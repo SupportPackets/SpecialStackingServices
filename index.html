@@ -19,11 +19,11 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('https://meblogwritegood.com/wp-content/uploads/2011/10/screen-shot-2011-10-14-at-4-53-14-pm.png');
+            background-image: url('https://c4.wallpaperflare.com/wallpaper/359/90/392/braveheart-wallpaper-preview.jpg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            opacity: 0.2;
+            opacity: 0.5;
             z-index: -1;
         }
 
@@ -54,6 +54,21 @@
     </style>
 </head>
 <body>
+
+    <div class="content">
+        <h2>Support Packets Strategy</h2>
+        <p><strong>Spread your support packets over several villas.</strong> Please do not stack too many packets on the same village.
+        If a villa gets attacked, you want to lose a part of your troops, not all, so it’s faster to rebuild your defensive army!</p>
+        <h3>Support Packets</h3>
+        <ul>
+            <li>500 spears, 500 swords</li>
+            <li>500 spears, 500 archers</li>
+            <li>500 swords, 500 archers</li>
+            <li>500 spears, 120 HC</li>
+            <li>500 archers, 120 HC</li>
+        </ul>
+    </div>
+
     <div class="content">
         <h1>Tribal Wars Distance Tool</h1>
         <p>Enter your village coordinates to calculate the closest target villages and their travel times:</p>
@@ -157,7 +172,7 @@
             if (selectedPackets.length > 0) {
                 const clipboardText = selectedPackets.join('\n');
                 navigator.clipboard.writeText(clipboardText).then(() => {
-                    alert('Packets copied to clipboard!');
+                    alert('Packets sent copied to clipboard. Past them in the forum!');
                 });
             } else {
                 alert('No packets selected to copy.');
