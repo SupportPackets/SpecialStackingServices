@@ -24,9 +24,9 @@
             <tr>
                 <th>Target</th>
                 <th>Coordinates</th>
-                <th>Packet</th>
-                <th>Swords Travel Time</th>
-                <th>Non-Swords Travel Time</th>
+                <th>Player</th>
+                <th>Packets</th>
+                <th>Target</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -34,58 +34,47 @@
 
     <script>
         const villages = [
-            { name: "Apu", x: 490, y: 496, packet: "Blackout NORTH" },
-            { name: "Bart", x: 498, y: 506, packet: "Blackout NORTH" },
-            { name: "002 Burns", x: 493, y: 500, packet: "Blackout NORTH" },
-            { name: "Flanders", x: 508, y: 500, packet: "Blackout NORTH" },
-            { name: "Gaius", x: 518, y: 504, packet: "Back in Time NORTH" },
-            { name: "Tiberius", x: 520, y: 507, packet: "Back in Time NORTH" },
-            { name: "Appius", x: 521, y: 502, packet: "Back in Time NORTH" },
-            { name: "Vopiscus", x: 527, y: 508, packet: "Back in Time NORTH" },
-            { name: "Vedius", x: 517, y: 502, packet: "Back in Time NORTH" },
-            { name: "002", x: 557, y: 508, packet: "Retriever EAST" },
-            { name: "006", x: 560, y: 507, packet: "Retriever EAST" },
-            { name: "008", x: 564, y: 506, packet: "Retriever EAST" },
-            { name: "001", x: 559, y: 509, packet: "Retriever EAST" },
-            { name: "005", x: 555, y: 505, packet: "Retriever EAST" },
-            { name: "Turtle Tilenxx1", x: 509, y: 505, packet: "obirdrevo NORTH EAST" },
-            { name: "Fish 1", x: 546, y: 510, packet: "obirdrevo NORTH EAST" },
-            { name: "Fish 3", x: 547, y: 514, packet: "obirdrevo NORTH EAST" },
-            { name: "Turtle 05", x: 509, y: 502, packet: "obirdrevo NORTH EAST" },
-            { name: "Soul Society", x: 467, y: 525, packet: "Tiger SOUTH" },
-            { name: "Turbo Betivu", x: 466, y: 527, packet: "Tiger SOUTH" },
-            { name: "Rares Gigeachi", x: 463, y: 524, packet: "Tiger SOUTH" },
-            { name: "DodgeG This and That", x: 457, y: 525, packet: "Tiger SOUTH" },
-            { name: "DodgeG This", x: 457, y: 527, packet: "Tiger SOUTH" },
-            { name: "Pizu - Clay", x: 494, y: 548, packet: "Carl SOUTH" },
-            { name: "Pizu - Wood", x: 496, y: 548, packet: "Carl SOUTH" },
-            { name: "Eldran - Pumping Station", x: 485, y: 541, packet: "Carl SOUTH" }
+            { name: "Apu", x: 490, y: 496, player: "Blackout NORTH" },
+            { name: "Bart", x: 498, y: 506, player: "Blackout NORTH" },
+            { name: "002 Burns", x: 493, y: 500, player: "Blackout NORTH" },
+            { name: "Flanders", x: 508, y: 500, player: "Blackout NORTH" },
+            { name: "Gaius", x: 518, y: 504, player: "Back in Time NORTH" },
+            { name: "Tiberius", x: 520, y: 507, player: "Back in Time NORTH" },
+            { name: "Appius", x: 521, y: 502, player: "Back in Time NORTH" },
+            { name: "Vopiscus", x: 527, y: 508, player: "Back in Time NORTH" },
+            { name: "Vedius", x: 517, y: 502, player: "Back in Time NORTH" },
+            { name: "002", x: 557, y: 508, player: "Retriever EAST" },
+            { name: "006", x: 560, y: 507, player: "Retriever EAST" },
+            { name: "008", x: 564, y: 506, player: "Retriever EAST" },
+            { name: "001", x: 559, y: 509, player: "Retriever EAST" },
+            { name: "005", x: 555, y: 505, player: "Retriever EAST" },
+            { name: "Turtle Tilenxx1", x: 509, y: 505, player: "obirdrevo NORTH EAST" },
+            { name: "Fish 1", x: 546, y: 510, player: "obirdrevo NORTH EAST" },
+            { name: "Fish 3", x: 547, y: 514, player: "obirdrevo NORTH EAST" },
+            { name: "Turtle 05", x: 509, y: 502, player: "obirdrevo NORTH EAST" },
+            { name: "Soul Society", x: 467, y: 525, player: "Tiger SOUTH" },
+            { name: "Turbo Betivu", x: 466, y: 527, player: "Tiger SOUTH" },
+            { name: "Rares Gigeachi", x: 463, y: 524, player: "Tiger SOUTH" },
+            { name: "DodgeG This and That", x: 457, y: 525, player: "Tiger SOUTH" },
+            { name: "DodgeG This", x: 457, y: 527, player: "Tiger SOUTH" },
+            { name: "Pizu - Clay", x: 494, y: 548, player: "Carl SOUTH" },
+            { name: "Pizu - Wood", x: 496, y: 548, player: "Carl SOUTH" },
+            { name: "Eldran - Pumping Station", x: 485, y: 541, player: "Carl SOUTH" }
         ];
         
         function calculateDistances() {
             const x = parseInt(document.getElementById("xCoord").value);
             const y = parseInt(document.getElementById("yCoord").value);
             
-            const results = villages.map(village => {
-                const distance = Math.abs(village.x - x) + Math.abs(village.y - y);
-                const swordsTime = distance * 22;
-                const nonSwordsTime = distance * 18;
-                return {
-                    ...village,
-                    swordsTravelTime: `${Math.floor(swordsTime / 60).toString().padStart(2, '0')}:${(swordsTime % 60).toString().padStart(2, '0')}`,
-                    nonSwordsTravelTime: `${Math.floor(nonSwordsTime / 60).toString().padStart(2, '0')}:${(nonSwordsTime % 60).toString().padStart(2, '0')}`
-                };
-            }).sort((a, b) => (Math.abs(a.x - x) + Math.abs(a.y - y)) - (Math.abs(b.x - x) + Math.abs(b.y - y)));
-            
             const tableBody = document.getElementById("resultsTable").querySelector("tbody");
             tableBody.innerHTML = "";
-            results.forEach(village => {
+            villages.forEach(village => {
                 const row = `<tr>
                     <td>${village.name}</td>
                     <td>(${village.x}|${village.y})</td>
-                    <td>${village.packet}</td>
-                    <td>${village.swordsTravelTime}</td>
-                    <td>${village.nonSwordsTravelTime}</td>
+                    <td>${village.player}</td>
+                    <td contenteditable="true"></td>
+                    <td>20</td>
                 </tr>`;
                 tableBody.innerHTML += row;
             });
