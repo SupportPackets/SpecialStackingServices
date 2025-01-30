@@ -1,177 +1,94 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Tribal Wars Distance Tool</title>
-<style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            position: relative;
-            z-index: 0;
-        }
-
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url('https://c4.wallpaperflare.com/wallpaper/359/90/392/braveheart-wallpaper-preview.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            opacity: 0.5;
-            z-index: -1;
-        }
-
-        .content {
-            background-color: rgba(255, 255, 255, 0.8);
-            padding: 20px;
-            border-radius: 10px;
-            position: relative;
-            z-index: 1;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-        }
-        th {
-            background-color: #f4f4f4;
-        }
-        button {
-            margin-top: 20px;
-        }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tribal Wars Distance Tool</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid black; padding: 8px; text-align: center; }
+        th { background-color: #f4f4f4; }
     </style>
 </head>
 <body>
-<div class="content">
-<h2>Support Packets Strategy</h2>
-<p><strong>Spread your support packets over several villas.</strong> Please do not stack too many packets on the same village.
-        If a villa gets attacked, you want to lose a part of your troops, not all, so it’s faster to rebuild your defensive army!</p>
-<h3>Support Packets</h3>
-<ul>
-<li>500 spears, 500 swords</li>
-<li>500 spears, 500 archers</li>
-<li>500 swords, 500 archers</li>
-<li>500 spears, 120 HC</li>
-<li>500 archers, 120 HC</li>
-</ul>
-</div>
-<div class="content">
-<h1>Tribal Wars Distance Tool</h1>
-<p>Enter your village coordinates to calculate the closest target villages and their travel times:</p>
-<label for="x">X Coordinate:</label>
-<input id="x" placeholder="e.g., 504" type="number"/>
-<label for="y">Y Coordinate:</label>
-<input id="y" placeholder="e.g., 516" type="number"/>
-<button onclick="calculateDistances()">Calculate</button>
-<button onclick="copySelectedPacketsToClipboard()">Copy Selected Packets</button><table id="results">
-<thead>
-<tr>
-<th>Village Coordinates</th>
-<th>Packets</th>
-<th>Target</th>
-<th>Swords Travel Time</th>
-<th>Non-Swords Travel Time</th>
-<th>Packets to Send</th>
-</tr>
-</thead>
-<tbody>
-<!-- Results will be populated here -->
-</tbody>
-</table>
+    <h2>Tribal Wars Distance Tool</h2>
+    <label for="xCoord">X Coordinate:</label>
+    <input type="number" id="xCoord" required>
+    <label for="yCoord">Y Coordinate:</label>
+    <input type="number" id="yCoord" required>
+    <button onclick="calculateDistances()">Find Closest Villages</button>
+    
+    <table id="resultsTable">
+        <thead>
+            <tr>
+                <th>Target</th>
+                <th>Coordinates</th>
+                <th>Packet</th>
+                <th>Swords Travel Time</th>
+                <th>Non-Swords Travel Time</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 
-<div id="updated-table"></div>
-</div>
-<script>
-        const targetVillages = [
-            { name: "Apu", x: 490, y: 496, packets: 0, target: 20 },
-            { name: "Bart", x: 498, y: 506, packets: 0, target: 20 },
-            { name: "002 Burns", x: 493, y: 500, packets: 0, target: 20 },
-            { name: "Flanders", x: 508, y: 500, packets: 0, target: 20 },
-            { name: "023. Vedius", x: 517, y: 502, packets: 0, target: 20 },
-            { name: "014. Appius", x: 521, y: 502, packets: 0, target: 20 },
-            { name: "002. Gaius", x: 518, y: 504, packets: 0, target: 20 },
-            { name: "010. Tiberius", x: 520, y: 507, packets: 0, target: 20 },
-            { name: "001. Marcus", x: 518, y: 507, packets: 0, target: 20 },
-            { name: "Turtle Tilenxx1", x: 509, y: 505, packets: 0, target: 20 },
-            { name: "Turtle 08", x: 510, y: 502, packets: 0, target: 20 },
-            { name: "Turtle 07", x: 506, y: 504, packets: 0, target: 20 },
-            { name: "Turtle 06", x: 508, y: 503, packets: 0, target: 20 },
-            { name: "Turtle 05", x: 509, y: 502, packets: 0, target: 20 },
-            { name: "N 007", x: 490, y: 494, packets: 0, target: 20 }
+    <script>
+        const villages = [
+            { name: "Apu", x: 490, y: 496, packet: "Blackout NORTH" },
+            { name: "Bart", x: 498, y: 506, packet: "Blackout NORTH" },
+            { name: "002 Burns", x: 493, y: 500, packet: "Blackout NORTH" },
+            { name: "Flanders", x: 508, y: 500, packet: "Blackout NORTH" },
+            { name: "Gaius", x: 518, y: 504, packet: "Back in Time NORTH" },
+            { name: "Tiberius", x: 520, y: 507, packet: "Back in Time NORTH" },
+            { name: "Appius", x: 521, y: 502, packet: "Back in Time NORTH" },
+            { name: "Vopiscus", x: 527, y: 508, packet: "Back in Time NORTH" },
+            { name: "Vedius", x: 517, y: 502, packet: "Back in Time NORTH" },
+            { name: "002", x: 557, y: 508, packet: "Retriever EAST" },
+            { name: "006", x: 560, y: 507, packet: "Retriever EAST" },
+            { name: "008", x: 564, y: 506, packet: "Retriever EAST" },
+            { name: "001", x: 559, y: 509, packet: "Retriever EAST" },
+            { name: "005", x: 555, y: 505, packet: "Retriever EAST" },
+            { name: "Turtle Tilenxx1", x: 509, y: 505, packet: "obirdrevo NORTH EAST" },
+            { name: "Fish 1", x: 546, y: 510, packet: "obirdrevo NORTH EAST" },
+            { name: "Fish 3", x: 547, y: 514, packet: "obirdrevo NORTH EAST" },
+            { name: "Turtle 05", x: 509, y: 502, packet: "obirdrevo NORTH EAST" },
+            { name: "Soul Society", x: 467, y: 525, packet: "Tiger SOUTH" },
+            { name: "Turbo Betivu", x: 466, y: 527, packet: "Tiger SOUTH" },
+            { name: "Rares Gigeachi", x: 463, y: 524, packet: "Tiger SOUTH" },
+            { name: "DodgeG This and That", x: 457, y: 525, packet: "Tiger SOUTH" },
+            { name: "DodgeG This", x: 457, y: 527, packet: "Tiger SOUTH" },
+            { name: "Pizu - Clay", x: 494, y: 548, packet: "Carl SOUTH" },
+            { name: "Pizu - Wood", x: 496, y: 548, packet: "Carl SOUTH" },
+            { name: "Eldran - Pumping Station", x: 485, y: 541, packet: "Carl SOUTH" }
         ];
-
+        
         function calculateDistances() {
-            const x = parseInt(document.getElementById('x').value);
-            const y = parseInt(document.getElementById('y').value);
-
-            if (isNaN(x) || isNaN(y)) {
-                alert('Please enter valid coordinates.');
-                return;
-            }
-
-            const results = targetVillages.map(village => {
-                const distance = Math.sqrt((village.x - x) ** 2 + (village.y - y) ** 2);
-                const swordsTime = Math.floor(distance * 22);
-                const nonSwordsTime = Math.floor(distance * 18);
+            const x = parseInt(document.getElementById("xCoord").value);
+            const y = parseInt(document.getElementById("yCoord").value);
+            
+            const results = villages.map(village => {
+                const distance = Math.abs(village.x - x) + Math.abs(village.y - y);
+                const swordsTime = distance * 22;
+                const nonSwordsTime = distance * 18;
                 return {
-                    coordinates: `${village.name} (${village.x}|${village.y})`,
-                    packets: village.packets,
-                    target: village.target,
-                    swordsTime: `${Math.floor(swordsTime / 60).toString().padStart(2, '0')}h${(swordsTime % 60).toString().padStart(2, '0')}m`,
-                    nonSwordsTime: `${Math.floor(nonSwordsTime / 60).toString().padStart(2, '0')}h${(nonSwordsTime % 60).toString().padStart(2, '0')}m`
+                    ...village,
+                    swordsTravelTime: `${Math.floor(swordsTime / 60).toString().padStart(2, '0')}:${(swordsTime % 60).toString().padStart(2, '0')}`,
+                    nonSwordsTravelTime: `${Math.floor(nonSwordsTime / 60).toString().padStart(2, '0')}:${(nonSwordsTime % 60).toString().padStart(2, '0')}`
                 };
+            }).sort((a, b) => (Math.abs(a.x - x) + Math.abs(a.y - y)) - (Math.abs(b.x - x) + Math.abs(b.y - y)));
+            
+            const tableBody = document.getElementById("resultsTable").querySelector("tbody");
+            tableBody.innerHTML = "";
+            results.forEach(village => {
+                const row = `<tr>
+                    <td>${village.name}</td>
+                    <td>(${village.x}|${village.y})</td>
+                    <td>${village.packet}</td>
+                    <td>${village.swordsTravelTime}</td>
+                    <td>${village.nonSwordsTravelTime}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
             });
-
-            results.sort((a, b) => a.swordsTime.localeCompare(b.swordsTime));
-
-            const tableBody = document.querySelector('#results tbody');
-            tableBody.innerHTML = results.map(result => `
-                <tr>
-                    <td>${result.coordinates}</td>
-                    <td>${result.packets}</td>
-                    <td>${result.target}</td>
-                    <td>${result.swordsTime}</td>
-                    <td>${result.nonSwordsTime}</td>
-                    <td><input type="number" min="0" placeholder="Packets to send"></td>
-                </tr>
-            `).join('');
-        }
-
-        function copySelectedPacketsToClipboard() {
-            const rows = document.querySelectorAll('#results tbody tr');
-            const selectedPackets = [];
-
-            rows.forEach(row => {
-                const village = row.cells[0].textContent;
-                const packetsInput = row.cells[5].querySelector('input');
-                const packetsToAdd = parseInt(packetsInput.value) || 0;
-
-                if (packetsToAdd > 0) {
-                    selectedPackets.push(`${village}: ${packetsToAdd} packets`);
-                }
-            });
-
-            if (selectedPackets.length > 0) {
-                const clipboardText = selectedPackets.join('\n');
-                navigator.clipboard.writeText(clipboardText).then(() => {
-                    alert('Packets copied to clipboard. Paste them in the forums.');
-                });
-            } else {
-                alert('No packets selected to copy.');
-            }
         }
     </script>
 </body>
