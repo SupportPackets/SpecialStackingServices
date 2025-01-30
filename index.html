@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tribal Wars Distance Tool</title>
-    <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tribal Wars Distance Tool</title>
+<style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
@@ -54,52 +55,46 @@
     </style>
 </head>
 <body>
-
-    <div class="content">
-        <h2>Support Packets Strategy</h2>
-        <p><strong>Spread your support packets over several villas.</strong> Please do not stack too many packets on the same village.
+<div class="content">
+<h2>Support Packets Strategy</h2>
+<p><strong>Spread your support packets over several villas.</strong> Please do not stack too many packets on the same village.
         If a villa gets attacked, you want to lose a part of your troops, not all, so it’s faster to rebuild your defensive army!</p>
-        <h3>Support Packets</h3>
-        <ul>
-            <li>500 spears, 500 swords</li>
-            <li>500 spears, 500 archers</li>
-            <li>500 swords, 500 archers</li>
-            <li>500 spears, 120 HC</li>
-            <li>500 archers, 120 HC</li>
-        </ul>
-    </div>
+<h3>Support Packets</h3>
+<ul>
+<li>500 spears, 500 swords</li>
+<li>500 spears, 500 archers</li>
+<li>500 swords, 500 archers</li>
+<li>500 spears, 120 HC</li>
+<li>500 archers, 120 HC</li>
+</ul>
+</div>
+<div class="content">
+<h1>Tribal Wars Distance Tool</h1>
+<p>Enter your village coordinates to calculate the closest target villages and their travel times:</p>
+<label for="x">X Coordinate:</label>
+<input id="x" placeholder="e.g., 504" type="number"/>
+<label for="y">Y Coordinate:</label>
+<input id="y" placeholder="e.g., 516" type="number"/>
+<button onclick="calculateDistances()">Calculate</button>
+<button onclick="copySelectedPacketsToClipboard()">Copy Selected Packets</button><table id="results">
+<thead>
+<tr>
+<th>Village Coordinates</th>
+<th>Packets</th>
+<th>Target</th>
+<th>Swords Travel Time</th>
+<th>Non-Swords Travel Time</th>
+<th>Packets to Send</th>
+</tr>
+</thead>
+<tbody>
+<!-- Results will be populated here -->
+</tbody>
+</table>
 
-    <div class="content">
-        <h1>Tribal Wars Distance Tool</h1>
-        <p>Enter your village coordinates to calculate the closest target villages and their travel times:</p>
-        <label for="x">X Coordinate:</label>
-        <input type="number" id="x" placeholder="e.g., 504">
-        <label for="y">Y Coordinate:</label>
-        <input type="number" id="y" placeholder="e.g., 516">
-        <button onclick="calculateDistances()">Calculate</button>
-
-        <table id="results">
-            <thead>
-                <tr>
-                    <th>Village Coordinates</th>
-                    <th>Packets</th>
-                    <th>Target</th>
-                    <th>Swords Travel Time</th>
-                    <th>Non-Swords Travel Time</th>
-                    <th>Packets to Send</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Results will be populated here -->
-            </tbody>
-        </table>
-
-        <button onclick="copySelectedPacketsToClipboard()">Copy Selected Packets</button>
-
-        <div id="updated-table"></div>
-    </div>
-
-    <script>
+<div id="updated-table"></div>
+</div>
+<script>
         const targetVillages = [
             { name: "Apu", x: 490, y: 496, packets: 0, target: 25 },
             { name: "Bart", x: 498, y: 506, packets: 0, target: 25 },
@@ -172,7 +167,7 @@
             if (selectedPackets.length > 0) {
                 const clipboardText = selectedPackets.join('\n');
                 navigator.clipboard.writeText(clipboardText).then(() => {
-                    alert('Packets sent copied to clipboard. Past them in the forum!');
+                    alert('Packets copied to clipboard. Paste them in the forums.');
                 });
             } else {
                 alert('No packets selected to copy.');
