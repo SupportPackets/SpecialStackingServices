@@ -1,104 +1,274 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tribal Wars Distance Tool</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid black; padding: 8px; text-align: center; }
-        th { background-color: #f4f4f4; }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Best Army Calculator</title>
+  <!-- 1) Make sure to download glpk.js from https://github.com/rndme/glpk.js
+           and put it in the same folder or on your server. Adjust src path as needed. -->
+<script type="module" src="glpk.js"></script>
+
+  <script>
+    // Damage matrix: attacker rows x defender columns
+    // Order of troop indices: [S, L, B, F, P]
+    // S = Skirmishers, L = Longbowman, B = Billman, F = FeudalKnight, P = Pikeman
+    const damageMatrix = [
+      [1.0,  1.25, 1.0,  1.5,  1.0],  // S -> (S, L, B, F, P)
+      [1.0,  1.0,  1.25, 1.0,  1.5],  // L -> (S, L, B, F, P)
+      [1.5,  1.25, 1.0,  1.0,  1.0],  // B -> (S, L, B, F, P)
+      [1.0,  1.0,  1.5,  1.0,  1.0],  // F -> (S, L, B, F, P)
+      [1.5,  1.0,  1.25, 1.0,  1.0],  // P -> (S, L, B, F, P)
+    ];
+
+    // For convenience, map troop type -> index in damageMatrix
+    const T = { S:0, L:1, B:2, F:3, P:4 };
+
+    // We'll build an ILP model in the format required by glpk.js
+    function buildModel(ourTroops, enemyTroops, maxSend) {
+      // 1) We want to define 5 variables: xS, xL, xB, xF, xP
+      //    Each is an integer, min 0, up to ourTroops of that type
+      //    plus a global sum constraint ≤ maxSend.
+
+      // We'll build "obj" (the objective function). For each variable,
+      // the coefficient in the objective is how much total damage
+      // that variable inflicts on all enemy troops combined.
+      //
+      // Example for xS: totalDamage(xS) = xS * sum_over_j(
+      //   damageMatrix[S][j] * enemyTroops[j]
+      // )
+      // We'll sum that for each troop type.
+
+      // 2) Calculate objective coefficients
+      const objectiveCoeffs = {};
+      // We'll keep the variable names consistent with the format glpk.js expects
+      const varNames = ["xS", "xL", "xB", "xF", "xP"];
+
+      // For each attacker i, compute the total damage from sending 1 unit
+      // against the entire enemy composition:
+      // sum_{j in defenders} damageMatrix[i][j] * enemyTroops[j]
+      function totalDamageForAttacker(i) {
+        let dmg = 0;
+        for (let j = 0; j < 5; j++) {
+          dmg += damageMatrix[i][j] * enemyTroops[j];
+        }
+        return dmg;
+      }
+
+      const totalDamageS = totalDamageForAttacker(T.S);
+      const totalDamageL = totalDamageForAttacker(T.L);
+      const totalDamageB = totalDamageForAttacker(T.B);
+      const totalDamageF = totalDamageForAttacker(T.F);
+      const totalDamageP = totalDamageForAttacker(T.P);
+
+      // Build the objective
+      objectiveCoeffs["xS"] = totalDamageS;
+      objectiveCoeffs["xL"] = totalDamageL;
+      objectiveCoeffs["xB"] = totalDamageB;
+      objectiveCoeffs["xF"] = totalDamageF;
+      objectiveCoeffs["xP"] = totalDamageP;
+
+      // 3) Constraints
+      // We'll make one constraint per troop type: xT <= ourTroops[T]
+      // We'll also add the constraint xS + xL + xB + xF + xP <= maxSend
+      const constraints = [];
+
+      // Each constraint has a name, a "coef" object mapping variable->coefficient,
+      // and a "bnds" with an upper/lower bound. The default relationship is:
+      // sum_of(coeff[i]*var[i]) <= bnds.UP
+      // or >= bnds.LO, depending on how we define it.
+
+      // a) xS <= ourTroops[S], xL <= ourTroops[L], etc.
+      constraints.push({
+        name: "Skirmishers_avail",
+        coeff: { xS: 1 },
+        bnds: { type: glp.GLP_UP, ub: ourTroops[T.S], lb: 0 }
+      });
+      constraints.push({
+        name: "Longbowman_avail",
+        coeff: { xL: 1 },
+        bnds: { type: glp.GLP_UP, ub: ourTroops[T.L], lb: 0 }
+      });
+      constraints.push({
+        name: "Billman_avail",
+        coeff: { xB: 1 },
+        bnds: { type: glp.GLP_UP, ub: ourTroops[T.B], lb: 0 }
+      });
+      constraints.push({
+        name: "FeudalKnight_avail",
+        coeff: { xF: 1 },
+        bnds: { type: glp.GLP_UP, ub: ourTroops[T.F], lb: 0 }
+      });
+      constraints.push({
+        name: "Pikeman_avail",
+        coeff: { xP: 1 },
+        bnds: { type: glp.GLP_UP, ub: ourTroops[T.P], lb: 0 }
+      });
+
+      // b) xS + xL + xB + xF + xP <= maxSend
+      {
+        let sumCoeffs = {};
+        sumCoeffs["xS"] = 1;
+        sumCoeffs["xL"] = 1;
+        sumCoeffs["xB"] = 1;
+        sumCoeffs["xF"] = 1;
+        sumCoeffs["xP"] = 1;
+
+        constraints.push({
+          name: "Total_troops",
+          coeff: sumCoeffs,
+          bnds: { type: glp.GLP_UP, ub: maxSend, lb: 0 }
+        });
+      }
+
+      // 4) Indicate that xS, xL, xB, xF, xP are all integer variables
+      // glpk.js requires you to list them under "ints" (or "binaries" if they must be 0/1).
+      const intVars = varNames; // all 5 are integer
+
+      // 5) Build full model
+      const model = {
+        name: "Best Army",
+        objective: {
+          direction: glp.GLP_MAX,  // "maximize"
+          name: "obj",
+          vars: objectiveCoeffs
+        },
+        subjectTo: constraints,
+        // List all integer variables
+        // (You could use `binaries: varNames` if they must be 0/1. We need general integer.)
+        generals: intVars,
+      };
+
+      return model;
+    }
+
+    function solveBestArmy() {
+      // 1) Parse user inputs from the form
+      // Each troop type has two fields: "myS", "enemyS", etc.
+      // We'll parse them as integers, default 0 if blank.
+
+      function val(id) {
+        let v = parseInt(document.getElementById(id).value, 10);
+        return isNaN(v) ? 0 : v;
+      }
+
+      // Our troops
+      const myS = val("myS");
+      const myL = val("myL");
+      const myB = val("myB");
+      const myF = val("myF");
+      const myP = val("myP");
+
+      // Enemy troops
+      const enemyS = val("enemyS");
+      const enemyL = val("enemyL");
+      const enemyB = val("enemyB");
+      const enemyF = val("enemyF");
+      const enemyP = val("enemyP");
+
+      const maxSend = val("maxSend");
+
+      // Convert to arrays for convenience with the damageMatrix
+      const ourTroops = [myS, myL, myB, myF, myP];
+      const enemyTroops = [enemyS, enemyL, enemyB, enemyF, enemyP];
+
+      // 2) Build the ILP model
+      const model = buildModel(ourTroops, enemyTroops, maxSend);
+
+      // 3) Solve with glpk.js
+      // This returns an object with .result.status, .result.vars, .result.z, etc.
+      const solution = glp.solve(model);
+
+      // 4) Extract solution
+      // solution.result.vars is e.g. { xS: 10, xL: 0, ... } if feasible
+      // solution.result.z is the objective (total damage)
+      let resultEl = document.getElementById("result");
+      if (!solution || !solution.result || solution.result.status !== 5) {
+        // 5 in GLPK means "optimal" (GLP_OPT)
+        resultEl.innerHTML = "No optimal solution found. Possibly infeasible?";
+        return;
+      }
+
+      const xS = solution.result.vars.xS || 0;
+      const xL = solution.result.vars.xL || 0;
+      const xB = solution.result.vars.xB || 0;
+      const xF = solution.result.vars.xF || 0;
+      const xP = solution.result.vars.xP || 0;
+      const totalDamage = solution.result.z.toFixed(2);
+
+      // 5) Show the results
+      resultEl.innerHTML = `
+        <p><strong>Best Army Composition:</strong></p>
+        <ul>
+          <li>Skirmishers: ${xS}</li>
+          <li>Longbowmen: ${xL}</li>
+          <li>Billmen: ${xB}</li>
+          <li>Feudal Knights: ${xF}</li>
+          <li>Pikemen: ${xP}</li>
+        </ul>
+        <p><strong>Estimated Total Damage:</strong> ${totalDamage}</p>
+      `;
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 20px auto;
+    }
+    label {
+      display: inline-block;
+      width: 140px;
+      margin-bottom: 5px;
+    }
+    input[type="number"] {
+      width: 60px;
+    }
+    .section {
+      margin-bottom: 1.5em;
+    }
+    .section h2 {
+      margin-bottom: 0.5em;
+    }
+    button {
+      margin-top: 10px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+    #result p, #result ul {
+      margin: 0.5em 0;
+    }
+  </style>
 </head>
 <body>
-    <h2>Tribal Wars Distance Tool</h2>
-    <label for="xCoord">X Coordinate:</label>
-    <input type="number" id="xCoord" required>
-    <label for="yCoord">Y Coordinate:</label>
-    <input type="number" id="yCoord" required>
-    <button onclick="calculateDistances()">Find Closest Villages</button>
-    
-    <table id="resultsTable">
-        <thead>
-            <tr>
-                <th>Target</th>
-                <th>Coordinates</th>
-                <th>Player</th>
-                <th>Distance</th>
-                <th>Packets to Add</th>
-                <th>Total Packets</th>
-                <th>Target</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+  <h1>Tribal Wars Mini-Game: Best Army Calculator</h1>
+  <div class="section">
+    <h2>Your Troops</h2>
+    <label>Skirmishers:</label> <input type="number" id="myS" min="0" value="200"><br>
+    <label>Longbowmen:</label> <input type="number" id="myL" min="0" value="100"><br>
+    <label>Billmen:</label>    <input type="number" id="myB" min="0" value="80"><br>
+    <label>Feudal Knights:</label> <input type="number" id="myF" min="0" value="50"><br>
+    <label>Pikemen:</label>   <input type="number" id="myP" min="0" value="120"><br>
+  </div>
 
-    <script>
-        const villages = [
-            { name: "Apu", x: 490, y: 496, player: "Blackout NORTH" },
-            { name: "Bart", x: 498, y: 506, player: "Blackout NORTH" },
-            { name: "002 Burns", x: 493, y: 500, player: "Blackout NORTH" },
-            { name: "Flanders", x: 508, y: 500, player: "Blackout NORTH" },
-            { name: "Gaius", x: 518, y: 504, player: "Back in Time NORTH" },
-            { name: "Tiberius", x: 520, y: 507, player: "Back in Time NORTH" },
-            { name: "Appius", x: 521, y: 502, player: "Back in Time NORTH" },
-            { name: "Vopiscus", x: 527, y: 508, player: "Back in Time NORTH" },
-            { name: "Vedius", x: 517, y: 502, player: "Back in Time NORTH" },
-            { name: "002", x: 557, y: 508, player: "Retriever EAST" },
-            { name: "006", x: 560, y: 507, player: "Retriever EAST" },
-            { name: "008", x: 564, y: 506, player: "Retriever EAST" },
-            { name: "001", x: 559, y: 509, player: "Retriever EAST" },
-            { name: "005", x: 555, y: 505, player: "Retriever EAST" },
-            { name: "Turtle Tilenxx1", x: 509, y: 505, player: "obirdrevo NORTH EAST" },
-            { name: "Fish 1", x: 546, y: 510, player: "obirdrevo NORTH EAST" },
-            { name: "Fish 3", x: 547, y: 514, player: "obirdrevo NORTH EAST" },
-            { name: "Turtle 05", x: 509, y: 502, player: "obirdrevo NORTH EAST" },
-            { name: "Soul Society", x: 467, y: 525, player: "Tiger SOUTH" },
-            { name: "Turbo Betivu", x: 466, y: 527, player: "Tiger SOUTH" },
-            { name: "Rares Gigeachi", x: 463, y: 524, player: "Tiger SOUTH" },
-            { name: "DodgeG This and That", x: 457, y: 525, player: "Tiger SOUTH" },
-            { name: "DodgeG This", x: 457, y: 527, player: "Tiger SOUTH" },
-            { name: "Pizu - Clay", x: 494, y: 548, player: "Carl SOUTH" },
-            { name: "Pizu - Wood", x: 496, y: 548, player: "Carl SOUTH" },
-            { name: "Eldran - Pumping Station", x: 485, y: 541, player: "Carl SOUTH" }
-        ];
-        
-        function calculateDistances() {
-            const x = parseInt(document.getElementById("xCoord").value);
-            const y = parseInt(document.getElementById("yCoord").value);
-            
-            if (isNaN(x) || isNaN(y)) {
-                alert("Please enter valid coordinates.");
-                return;
-            }
+  <div class="section">
+    <h2>Enemy Troops</h2>
+    <label>Skirmishers:</label> <input type="number" id="enemyS" min="0" value="50"><br>
+    <label>Longbowmen:</label>  <input type="number" id="enemyL" min="0" value="300"><br>
+    <label>Billmen:</label>     <input type="number" id="enemyB" min="0" value="200"><br>
+    <label>Feudal Knights:</label> <input type="number" id="enemyF" min="0" value="10"><br>
+    <label>Pikemen:</label>     <input type="number" id="enemyP" min="0" value="400"><br>
+  </div>
 
-            const tableBody = document.getElementById("resultsTable").querySelector("tbody");
-            tableBody.innerHTML = "";
+  <div class="section">
+    <h2>Max Troops to Send</h2>
+    <label>Maximum:</label> <input type="number" id="maxSend" min="1" value="300"><br>
+  </div>
 
-            // Calculate distances
-            let distances = villages.map(village => {
-                let distance = Math.sqrt((village.x - x) ** 2 + (village.y - y) ** 2);
-                return { ...village, distance: distance.toFixed(2) };
-            });
+  <button onclick="solveBestArmy()">Calculate Best Army</button>
 
-            // Sort by distance (ascending)
-            distances.sort((a, b) => a.distance - b.distance);
-
-            // Populate the table
-            distances.forEach(village => {
-                const row = `<tr>
-                    <td>${village.name}</td>
-                    <td>(${village.x}|${village.y})</td>
-                    <td>${village.player}</td>
-                    <td>${village.distance}</td>
-                    <td contenteditable="true"></td>
-                    <td>0</td>
-                    <td>20</td>
-                </tr>`;
-                tableBody.innerHTML += row;
-            });
-        }
-    </script>
+  <hr>
+  <div id="result">
+    <!-- Results from the solver will appear here -->
+  </div>
 </body>
 </html>
